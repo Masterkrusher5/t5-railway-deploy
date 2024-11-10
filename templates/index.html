@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abstractive Text Summarizer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-image: url('https://source.unsplash.com/1600x900/?abstract');
+            background-size: cover;
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 50px;
+        }
+        .footer {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 1rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Abstractive Text Summarizer</h1>
+        <p>This application summarizes text using a trained T5 transformer model.</p>
+        <div class="form-group">
+            <label for="inputMethod">Choose Input Method:</label>
+            <select id="inputMethod" class="form-control" onchange="toggleInputMethod()">
+                <option value="write">Write</option>
+                <option value="upload">Upload PDF</option>
+            </select>
+        </div>
+        <div id="textInput" class="form-group">
+            <textarea id="text" class="form-control" rows="4" placeholder="Enter text to summarize"></textarea>
+        </div>
+        <div id="fileInput" class="form-group" style="display: none;">
+            <input type="file" id="file" class="form-control" accept=".pdf">
+        </div>
+        <div class="form-group">
+            <label for="maxLength">Select maximum summary length (in words):</label>
+            <input type="range" id="maxLength" class="form-control-range" min="30" max="200" value="50" oninput="this.nextElementSibling.value = this.value">
+            <output>50</output>
+        </div>
+        <button class="btn btn-primary" onclick="summarize()">Summarize</button>
+        <h2 class="mt-4">Summary</h2>
+        <p id="summary"></p>
+    </div>
+    <div class="footer">
+        Designed and Developed by Ronit Debnath
+    </div>
+
+    <script>
+        const BASE_URL = 'http://127.0.0.1:8000';
+
+        function toggleInputMethod() {
+            const inputMethod = document.getElementById('inputMethod').value;
+            const textInput = document.getElementById('textInput');
+            const fileInput = document.getElementById('fileInput');
+            if (inputMethod === 'write') {
+                textInput.style.display = 'block';
+                fileInput.style.display = 'none';
+            } else {
+                textInput.style.display = 'none';
+                fileInput.style.display = 'block';
+            }
+        }
+
+        async function summarize() {
+            const inputMethod = document.getElementById('inputMethod').value;
+            const maxLength = document.getElementById('maxLength').value;
+            let endpoint = '';
+            let options = {};
+
+            if (inputMethod === 'write') {
+                const text = document.getElementById('text').value;
+                if (!text.trim()) {
+                    alert("Please enter some text to summarize.");
+                    return;
+                }
+                endpoint = '/summarize';
+                options = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, max_length: maxLength })
+                };
+            } else {
+                const fileInput = document.getElementById('file');
+                if (fileInput.files.length === 0) {
+                    alert("Please upload a PDF file.");
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+
+                endpoint = '/summarize_pdf';
+                options = {
+                    method: 'POST',
+                    body: formData
+                };
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}${endpoint}`, options);
+                const result = await response.json();
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    document.getElementById('summary').innerText = result.summary;
+                }
+            } catch (error) {
+                alert("An error occurred while summarizing. Please try again.");
+            }
+        }
+    </script>
+</body>
+</html>

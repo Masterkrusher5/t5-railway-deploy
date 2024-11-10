@@ -1,0 +1,9 @@
+huggingface_hub>=0.14.1,<1.0
+torch>=1.9.0
+Pillow==9.0.1
+Flask==2.0.1
+Flask-CORS==3.0.10
+transformers>=4.31.0
+pdfplumber==0.5.28
+sentencepiece==0.1.99
+tokenizers==0.13.3
